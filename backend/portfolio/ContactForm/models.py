@@ -3,29 +3,31 @@ import os
 from django import forms
 from django.core.validators import RegexValidator, MinLengthValidator, MaxLengthValidator
 from django.db import models
+from django.db.models.functions import Length
+from django.conf import settings
 
-env = os.environ.get
-
+models.CharField.register_lookup(Length)
 
 class Message(models.Model):
     name = models.CharField(
-        max_length=int(env('CONTACT_FORM_NAME_MAXLENGTH'))
+        max_length=settings.CONTACT_FORM_NAME_MAXLENGTH,
+        validators=[MinLengthValidator(1)]
     )
     company = models.CharField(
-        max_length=int(env('CONTACT_FORM_COMPANY_MAXLENGTH')), 
+        max_length=settings.CONTACT_FORM_COMPANY_MAXLENGTH, 
         blank=True
     )
     email = models.CharField(
-        max_length=int(env('CONTACT_FORM_EMAIL_MAXLENGTH')),
+        max_length=settings.CONTACT_FORM_EMAIL_MAXLENGTH,
         validators=[RegexValidator(
-            regex=env('CONTACT_FORM_EMAIL_REGEX'),
+            regex=settings.CONTACT_FORM_EMAIL_REGEX,
             message="Please enter a valid email address."
         )]
     )
     content = models.TextField(
         validators=[
-            MinLengthValidator(int(env('CONTACT_FORM_MESSAGE_CONTENT_MINLENGTH'))),
-            MaxLengthValidator(int(env('CONTACT_FORM_MESSAGE_CONTENT_MAXLENGTH')))
+            MinLengthValidator(settings.CONTACT_FORM_MESSAGE_CONTENT_MINLENGTH),
+            MaxLengthValidator(settings.CONTACT_FORM_MESSAGE_CONTENT_MAXLENGTH)
         ]
     )
     sent_at = models.DateTimeField(auto_now_add=True)
@@ -36,6 +38,13 @@ class Message(models.Model):
 
         indexes = [
             models.Index(fields=('sent_at',))
+        ]
+        
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(name__length__gte=1),
+                name='CHK_ContactForm_Message_Name_Length_GTE_1'
+            )
         ]
 
     def __str__(self):
