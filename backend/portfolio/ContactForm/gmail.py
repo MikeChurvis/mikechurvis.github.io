@@ -10,6 +10,8 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
+from django.conf import settings
+
 
 def deterministic_hash(thing):
     dump = json.dumps(
@@ -22,13 +24,13 @@ def deterministic_hash(thing):
     return hashlib.md5(dump.encode('utf-8')).digest().hex()
 
 
-def get_credentials(credentials_filepath, scopes, token_output_path):
+def get_credentials(scopes):
     credentials: Credentials = None
-    credentials_filepath = os.path.expanduser(credentials_filepath)
+    credentials_filepath = os.path.expanduser(settings.GOOGLE_CLIENT_SECRET_FILEPATH)
 
     scope_hash = deterministic_hash(scopes)
     token_filepath = os.path.expanduser(os.path.join(
-        token_output_path,
+        settings.GOOGLE_CLIENT_TOKEN_FOLDER,
         f'google-client-token-{scope_hash}.secret'
     ))
 
@@ -42,10 +44,12 @@ def get_credentials(credentials_filepath, scopes, token_output_path):
         if credentials and credentials.expired and credentials.refresh_token:
             credentials.refresh(Request())
         else:
-            credentials = InstalledAppFlow.from_client_secrets_file(
+            flow = InstalledAppFlow.from_client_secrets_file(
                 credentials_filepath,
                 scopes
-            ).run_local_server(port=5000)
+            )
+            flow.redirect_uri = settings.GOOGLE_CLIENT_FLOW_REDIRECT_URI
+            credentials = flow.run_local_server(port=5000)
 
         with open(token_filepath, 'w') as token_file:
             token_file.write(credentials.to_json())
@@ -53,13 +57,9 @@ def get_credentials(credentials_filepath, scopes, token_output_path):
     return credentials
 
 
-def send_message(credentials_filepath, message, token_output_path='.'):
+def send_message(message):
     scopes = ['https://www.googleapis.com/auth/gmail.send']
-    credentials = get_credentials(
-        credentials_filepath,
-        scopes,
-        token_output_path
-    )
+    credentials = get_credentials(scopes)
     service = build('gmail', 'v1', credentials=credentials)
     message = (
         service.users()

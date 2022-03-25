@@ -23,11 +23,7 @@ def queue_send_message_as_email(message_id):
                 message_content=message.body
             )
 
-            gmail.send_message(
-                credentials_filepath=settings.GOOGLE_CLIENT_SECRET_FILEPATH,
-                message=message_raw,
-                token_output_path=settings.GOOGLE_CLIENT_TOKEN_FOLDER,
-            )
+            gmail.send_message(message_raw)
 
         message.email_status = 'success'
     except gmail.HttpError as error:
