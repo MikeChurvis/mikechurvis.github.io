@@ -1,4 +1,4 @@
-from portfolio.settings.common import *
+from portfolio.settings.development import *
 import os
 
 DEBUG = False

@@ -42,8 +42,12 @@ class Message(models.Model):
         
         constraints = [
             models.CheckConstraint(
+                name='CHK_ContactForm_Message_Name_Length_GTE_1',
                 check=models.Q(name__length__gte=1),
-                name='CHK_ContactForm_Message_Name_Length_GTE_1'
+            ),
+            models.CheckConstraint(
+                name=f'CHK_ContactForm_Message_Name_Length_LTE_{settings.CONTACT_FORM_NAME_MAXLENGTH}',
+                check=models.Q(name__length__lte=settings.CONTACT_FORM_NAME_MAXLENGTH),
             )
         ]
 

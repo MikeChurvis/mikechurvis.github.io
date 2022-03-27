@@ -1,5 +1,3 @@
-import os
-
 from django.db import IntegrityError
 from django.test import TestCase, override_settings
 from ContactForm.models import Message
@@ -16,7 +14,7 @@ from ContactForm.models import Message
 )    
 class MessageTestCase(TestCase):
     
-    def test_create_valid_message(self):
+    def test_valid_message_succeeds(self):
         message = Message.objects.create(
             name="Joe Smith",
             company="JoeCorp",
@@ -25,7 +23,7 @@ class MessageTestCase(TestCase):
         )
         self.assertIn(message, Message.objects.all())
     
-    def test_create_message_no_name_fails(self):
+    def test_no_name_fails(self):
         def create_message():
             message = Message.objects.create(
                 name="",
@@ -34,4 +32,14 @@ class MessageTestCase(TestCase):
                 content="Hi! Joe Smith here, CEO and founder of JoeCorp..."
             )
         self.assertRaises(IntegrityError, create_message)
-                    
+    
+    def test_name_too_long_fails(self):
+        def create_message():
+            message = Message.objects.create(
+                name=f'J{"o" * 120}e Smith',
+                company="JoeCorp",
+                email="joe.smith@joecorp.com",
+                content="Hi! Joe Smith here, CEO and founder of JoeCorp..."
+            )
+        self.assertRaises(IntegrityError, create_message)
+

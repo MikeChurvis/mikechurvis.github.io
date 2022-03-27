@@ -89,7 +89,7 @@ if __name__ == '__main__':
         )
 
         try:
-            send_message(credentials_filepath, message)
+            send_message(message)
         except HttpError as error:
             print(f'Error: {error}')
 
